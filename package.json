@@ -1,0 +1,13 @@
+{
+  "name": "sierpinski-triangle",
+  "version": "0.0.1",
+  "description": "",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "kschaaf@google.com",
+  "license": "BSD-3-Clause",
+  "dependencies": {
+    "@polymer/lit-element": "^0.6.0-dev.5"
+  }
+}

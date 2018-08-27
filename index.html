@@ -1,0 +1,190 @@
+<!--
+@license
+Copyright (c) 2017 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<!DOCTYPE html>
+<html style="width: 100%; height: 100%; overflow: hidden">
+  <head>
+    <meta charset="utf-8">
+    <title>Lit SierpinskiTriangle</title>
+    <link rel="stylesheet" href="base.css" />
+  </head>
+  <body>
+    <h1>Lit SierpinskiTriangle</h1>
+    <div id="container">
+      <example-application></example-application>
+    </div>
+    <script type="module">
+      import {DeferredLitElement as LitElement, html} from './deferred-lit-element.js';
+      import {styleString} from '@polymer/lit-element/lib/render-helpers.js';
+
+      var dotStyle = {
+        position: 'absolute',
+        background: '#61dafb',
+        font: 'normal 15px sans-serif',
+        textAlign: 'center',
+        cursor: 'pointer',
+      };
+
+      var containerStyle = {
+        position: 'absolute',
+        transformOrigin: '0 0',
+        left: '50%',
+        top: '50%',
+        width: '10px',
+        height: '10px',
+        background: '#eee',
+      };
+
+      var targetSize = 25;
+
+      class Dot extends LitElement {
+        static get properties() {
+          return {
+            x: {type: Number},
+            y: {type: Number},
+            size: {type: Number},
+            hover: {type: Boolean}
+          }
+        }
+        constructor() {
+          super();
+          this.defer = true;
+          this.hover = false;
+        }
+        enter() {
+          this.hover = true;
+        }
+        leave() {
+          this.hover = false;
+        }
+        render() {
+          var s = this.size * 1.3;
+          var style = styleString({
+            ...dotStyle,
+            width: s + 'px',
+            height: s + 'px',
+            left: (this.x) + 'px',
+            top: (this.y) + 'px',
+            borderRadius: (s / 2) + 'px',
+            lineHeight: (s) + 'px',
+            background: this.hover ? '#ff0' : dotStyle.background
+          });
+          return html`
+            <style>
+              :host {
+                position: absolute,
+                background: #61dafb,
+                font: normal 15px sans-serif,
+                textAlign: center,
+                cursor: pointer
+              }
+            </style>
+            <div style="${style}" @mouseover="${() => this.enter()}" @mouseout="${() => this.leave()}">
+              ${this.hover ? '*' : ''}<slot></slot>${this.hover ? '*' : ''}
+            </div>`;
+        }
+      }
+      customElements.define('s-dot', Dot);
+
+      class SierpinskiTriangle extends LitElement {
+        constructor() {
+          super();
+          this.defer = true;
+        }
+        static get properties() {
+          return {
+            x: {type: Number},
+            y: {type: Number},
+            s: {type: Number},
+            children: {type: Number}
+          }
+        }
+        render() {
+          let {s, x, y, children} = this;
+          if (s <= targetSize) {
+            return html`
+              <s-dot
+                x="${x - (targetSize / 2)}"
+                y="${y - (targetSize / 2)}"
+                size="${targetSize}"
+              s-dot>${children}</s-dot>
+            `;
+          }
+          var newSize = s / 2;
+          var slowDown = true;
+          if (slowDown) {
+            var e = performance.now() + 0.8;
+            while (performance.now() < e) {
+              // Artificially long execution time.
+            }
+          }
+
+          s /= 2;
+
+          return html`
+            <s-triangle x="${x}" y="${y - (s / 2)}" s="${s}" children="${children}"></s-triangle>
+            <s-triangle x="${x - s}" y="${y + (s / 2)}" s="${s}" children="${children}"></s-triangle>
+            <s-triangle x="${x + s}" y="${y + (s / 2)}" s="${s}" children="${children}"></s-triangle>
+          `;
+        }
+      }
+      customElements.define('s-triangle', SierpinskiTriangle);
+
+      class ExampleApplication extends LitElement {
+        static get properties() {
+          return {
+            elapsed: {type: Number},
+            seconds: {type: Number}
+          }
+        }
+        constructor() {
+          super();
+          this.seconds = 0;
+          this.tick = this.tick.bind(this);
+        }
+        connectedCallback() {
+          super.connectedCallback();
+          this.intervalID = setInterval(this.tick, 1000);
+        }
+        tick() {
+          this.seconds = this.seconds % 10 + 1;
+        }
+        disconnectedCallback() {
+          super.disconnectedCallback();
+          clearInterval(this.intervalID);
+        }
+        render() {
+          const seconds = this.seconds;
+          const elapsed = this.elapsed;
+          const t = (elapsed / 1000) % 10;
+          const scale = 1 + (t > 5 ? 10 - t : t) / 10;
+          const transform = 'scaleX(' + (scale / 2.1) + ') scaleY(0.7) translateZ(0.1px)';
+          const style = styleString({ ...containerStyle, transform });
+          return html`
+            <div style="${style}">
+              <div>
+                <s-triangle x="0" y="0" s="1000" children="${this.seconds}"></s-triangle>
+              </div>
+            </div>
+          `;
+        }
+      }
+      customElements.define('example-application', ExampleApplication);
+
+      const start = new Date().getTime();
+      const app = document.querySelector('example-application');
+      function update() {
+        app.elapsed = new Date().getTime() - start;
+        requestAnimationFrame(update);
+      }
+      requestAnimationFrame(update);
+    </script>
+  </body>
+</html>
